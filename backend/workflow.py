@@ -1,5 +1,7 @@
 """
-test_run.py
+workflow.py
+Main function that accepts a prompt as an input and returns data 
+utilizing a Langchain agent by calling appropriate tools.
 """
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -14,6 +16,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 MODEL = "gemini-2.5-flash"
 
 class ToolCapture(BaseCallbackHandler):
+    """
+    Detects and returns the tool(s) the agent uses to execute given instructions
+    """
     def __init__(self):
         self.tools = []
     def on_tool_start(self, serialized, input_str, **kwargs):

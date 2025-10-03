@@ -1,4 +1,9 @@
-// background.js
+/*
+background.js
+Handles functions that run in the background, including listening for hotkeys,
+opening the search bar, and closing it when outside click is detected,
+*/
+
 let uiWindowId = null;
 var WIDTH = 420;
 var HEIGHT = 210;
@@ -35,9 +40,9 @@ async function openOrFocusUI(filename, center) {
     }
 
 
-    // Create a fresh popup window with your extension page
+    // Create a fresh popup window with the extension page
     const win = await chrome.windows.create({
-        url: chrome.runtime.getURL(filename), // rename if you like
+        url: chrome.runtime.getURL(filename), 
         type: "popup",
         width: WIDTH,
         height: height,
@@ -67,12 +72,12 @@ async function openOrFocusUI(filename, center) {
         if (!panelWindowId) return;
 
         if (msg?.type === "EXPAND" && msg?.expand === true) {
-            const height = 180; // clamp a bit
+            const height = 180; 
             chrome.windows.update(panelWindowId, { height }).catch(() => { });
         }
 
         if (msg?.type === "EXPAND" && msg?.expand === false) {
-            const height = 240; // clamp a bit
+            const height = 240; 
             chrome.windows.update(panelWindowId, { height }).catch(() => { });
         }
     });
@@ -88,12 +93,55 @@ chrome.windows.onRemoved.addListener((closedId) => {
 
 // Click on toolbar icon -> open/focus window
 chrome.action.onClicked.addListener(async () => {
+    // await openOrFocusUI("popup.html", false);
     await openOrFocusUI("popup.html", false);
 });
 
-// // pass in custom values inside params of openorfocusui, display only the searchbar and enter
-chrome.commands.onCommand.addListener(async() => {
-     await openOrFocusUI("popup.html", true);
+
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === "open-command-bar") {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) {
+      console.warn("No active tab found");
+      return;
+    }
+
+    try {
+      // Try to toggle overlay directly
+      await chrome.tabs.sendMessage(tab.id, { type: "tabi_TOGGLE" });
+    } catch (err) {
+      console.warn("No content script, injecting now…", err);
+
+      try {
+        // Inject content script
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ["content.js"]
+        });
+
+        // Retry message after injection
+        await chrome.tabs.sendMessage(tab.id, { type: "tabi_TOGGLE" });
+      } catch (injectErr) {
+        console.warn("Injection also failed, opening fallback tab:", injectErr);
+
+        // Fallback: open a safe page
+        chrome.tabs.create({ url: "https://google.com" }, (newTab) => {
+          chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+            if (tabId === newTab.id && info.status === "complete") {
+              chrome.tabs.onUpdated.removeListener(listener);
+
+              chrome.scripting.executeScript({
+                target: { tabId: newTab.id },
+                files: ["content.js"]
+              }, () => {
+                chrome.tabs.sendMessage(newTab.id, { type: "tabi_TOGGLE" });
+              });
+            }
+          });
+        });
+      }
+    }
+  }
 });
 
 
@@ -126,6 +174,6 @@ chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
       console.log(`No tab found for "${msg.title}"`);
       sendResponse({ success: false });
     }
-    return true; // keep channel open for async
+    return true; 
   }
 });

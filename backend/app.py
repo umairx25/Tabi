@@ -1,9 +1,13 @@
+"""
+API layer that receives browser data from the extension and returns appropriate
+information to the extension
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
-from workflow import run_agent  # your agent entry point
+from workflow import run_agent 
 
 app = FastAPI()
 

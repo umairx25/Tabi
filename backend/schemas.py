@@ -1,5 +1,7 @@
 """
-Schemas.py
+schemas.py
+Contains a list of pydantic schemas that represent different browser related
+objects, helping ensure proper LLM structure
 """
 from pydantic import BaseModel, Field
 from typing import List
@@ -12,6 +14,7 @@ class Tab(BaseModel):
     description: str = Field(..., description="The tab's description")
 
 class TabList(BaseModel):
+    "A list of tabs"
     tabs: List[Tab] = Field(..., description="A list of tabs")
 
 class TabGroup(BaseModel):
@@ -20,4 +23,5 @@ class TabGroup(BaseModel):
     tabs: List[Tab] = Field(..., description="A list of tab groups")
 
 class TabGroupList(BaseModel):
+    "A list of tab groups"
     tabs: List[TabGroup] = Field(..., description="A list of tab groups")

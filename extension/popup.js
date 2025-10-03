@@ -1,6 +1,11 @@
-const input = document.getElementById("main-input");
+/*
+popup.js
+Handles the main javascript functions, including communicating with the backend API
+and carrying out in-browser actions (like modifying/creating/switching tabs).
+*/
+
+const input = document.getElementById("search-input");
 const results = document.getElementById("results");
-const search_btn = document.getElementById("search-btn");
 
 import { BACKEND_URL } from "./config.js";
 
@@ -45,8 +50,6 @@ async function execute_cmd() {
   setStatus("Executing command…", true);
 
   // Get currently open tabs to send as context
-  // const focusedWin = await chrome.windows.getLastFocused();
-
   const windows = await chrome.windows.getAll({ windowTypes: ['normal'] });
   const focusedWin = windows.find(w => w.focused) || windows[0];
 
@@ -97,35 +100,28 @@ async function execute_cmd() {
  */
 async function handleAgentResponse(result, tabs, focusedWin) {
 
-  const msg_map = {"organize_tabs": "Organizing tabs…", "generate_tabs": "Generating tabs…",
-    "search_tabs": "Searching tabs…", "close_tabs":"Cleaning up your tabs…"
-  }
-
-  setStatus(msg_map[result.action], true);
-
   switch (result.action) {
     case "organize_tabs":
-      // setStatus("Organizing tabs…", true);
+      setStatus("Organizing tabs…", true);
       await organizeTabsFrontend(tabs, result.output.tabs, focusedWin);
       setStatus("Tabs organized successfully!");
       break;
 
     case "generate_tabs":
-      // setStatus("Generating tabs…", true);
+      setStatus("Generating tabs…", true);
       await openGeneratedTabs(result.output.group_name, result.output.tabs, focusedWin);
       setStatus(`Your tabs are saved in: ${result.output.group_name}`);
       break;
 
     case "search_tabs":
-      // setStatus("Searching tabs…", true);
+      setStatus("Searching tabs…", true);
 
       await switchToTab(result.output.title);
       setStatus("Your tab was found!");
       break;
     
     case "close_tabs":
-      // setStatus("Cleaning up your tabs…", true);
-
+      setStatus("Cleaning up your tabs…", true);
       await handleTabClosures(result.output.tabs);
       setStatus("Your tab have been cleaned up!");
       break;
@@ -286,6 +282,7 @@ function getGroupColor(name) {
  */
 function cycle_suggestions() {
   const start = "Ask Tabi to... ";
+  
   const suggestions_lst = [
     "organize my tabs",
     "create a calculus study guide",
@@ -294,12 +291,12 @@ function cycle_suggestions() {
     "find the CNN article I opened",
   ];
   const index = Math.floor(Math.random() * suggestions_lst.length);
+
   return start + suggestions_lst[index];
 }
 
 // === Event Bindings ===
-if (search_btn) {
-  search_btn.addEventListener("click", execute_cmd);
+if (input) {
   input.addEventListener("keydown", e => {
     if (e.key === "Enter") execute_cmd();
   });
@@ -312,4 +309,15 @@ document.addEventListener("DOMContentLoaded", () => {
   input.placeholder = search_suggestion;
   input.focus();
   input.select();
+});
+
+
+window.addEventListener("message", (event) => {
+if (event.data?.type === "FOCUS_SEARCH") {
+    const input = document.getElementById("search-input");
+    if (input) {
+    input.focus();
+    input.select();
+    }
+}
 });

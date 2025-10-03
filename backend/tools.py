@@ -1,5 +1,7 @@
 """
-Tools.py
+tools.py
+Contains a list of tools the LLM can see. Gives instructions on different types
+of brwoser-related queries and ensures a structured output is returned
 """
 import os
 from dotenv import load_dotenv
