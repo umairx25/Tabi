@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabi</title>
+    <link rel="icon" type="image/png" href="assets/icon.png" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <script type="module" src="index.js"></script>
+    <script type="module" src="waitlist.js"></script>
+    <script src="https://sheetdb.io/handlebars.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="assets/icon48.png" />
+            Tabi
+        </div>
+        <nav class="nav">
+            <a href="mailto:contact@uarham.me">Contact</a>
+            <a href="#footer">Features</a>
+            <a href="#waitlist">Join Waitlist</a>
+        </nav>
+    </header>
+
+    <section class="hero" id="waitlist">
+        <h1>Your Browser, <span class="gradient-text">Smarter</span></h1>
+        <p>Meet Tabi, your copilot for the web. He can organize, search, and take actions for you, 
+            all you need to do is ask! Sign up for the waitlist to be the first to get notified about updates!</p>
+        
+        <form class="waitlist-form" id="waitlistForm">
+            <input 
+                type="email" 
+                class="email-input" 
+                placeholder="Enter your email" 
+                required
+                id="emailInput"
+            >
+            <button type="submit" class="btn-primary">Join Waitlist</button>
+        </form>
+        <div class="success-message" id="successMessage">
+            ✓ You're on the list! We'll reach out soon.
+        </div>
+
+        <div class="video-section">
+    <video class="video-player" muted playsinline></video>
+    <video class="video-player" muted playsinline></video>
+    <video class="video-player" muted playsinline></video>
+
+    <div class="video-dots">
+        <div class="dot active" data-video="0"></div>
+        <div class="dot" data-video="1"></div>
+        <div class="dot" data-video="2"></div>
+    </div>
+</div>
+        
+
+
+    </section>
+
+    <section class="features" id="features">
+        <h2>How Tabi Can Help</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Organize Tabs</h3>
+                <p>Automatically groups your tabs into logical categories. No more endless scrolling.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3>Generate Tabs</h3>
+                <p>Ask Tabi to set up research, trip planning, or study sessions — it opens the right tabs for you.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Smart Search</h3>
+                <p>Find any tab, bookmark, or page from history instantly with natural language.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧹</div>
+                <h3>Clean Up</h3>
+                <p>Close distractions with a command. "Remove all social media tabs" — done.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer" id="footer">
+        <div class="footer-content">
+            <div>&copy; 2025 Tabi. All rights reserved.</div>
+             <div class="footer-links">
+                <a href="mailto:contact@uarham.me">Contact</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
