@@ -1,9 +1,3 @@
-// const videoSources = [
-//     'assets/tabi_remove.mp4',
-//     'assets/tabi_generate.mp4',
-//   'assets/tabi_find.mp4',
-// ];
-
 const videoSources = [
     'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707439/tabi_remove_uiua2i.mp4',
     'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707641/tabi_generate_gf4lqw.mp4',
