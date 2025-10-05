@@ -1,8 +1,15 @@
+// const videoSources = [
+//     'assets/tabi_remove.mp4',
+//     'assets/tabi_generate.mp4',
+//   'assets/tabi_find.mp4',
+// ];
+
 const videoSources = [
-    'assets/tabi_remove.mp4',
-    'assets/tabi_generate.mp4',
-  'assets/tabi_find.mp4',
+    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707439/tabi_remove_uiua2i.mp4',
+    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707641/tabi_generate_gf4lqw.mp4',
+    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707725/tabi_find_hz6h3c.mp4',
 ];
+
 
 const videos = document.querySelectorAll('.video-player');
 const dots = document.querySelectorAll('.dot');

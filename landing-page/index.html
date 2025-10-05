@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabi</title>
     <link rel="icon" type="image/png" href="assets/icon.png" />
     <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
     <script type="module" src="index.js"></script>
     <script type="module" src="waitlist.js"></script>
     <script src="https://sheetdb.io/handlebars.js"></script>
 </head>
+
 <body>
     <header class="header">
         <div class="logo">
@@ -26,17 +28,11 @@
 
     <section class="hero" id="waitlist">
         <h1>Your Browser, <span class="gradient-text">Smarter</span></h1>
-        <p>Meet Tabi, your copilot for the web. He can organize, search, and take actions for you, 
+        <p>Meet Tabi, your copilot for the web. He can organize, search, and take actions for you,
             all you need to do is ask! Sign up for the waitlist to be the first to get notified about updates!</p>
-        
+
         <form class="waitlist-form" id="waitlistForm">
-            <input 
-                type="email" 
-                class="email-input" 
-                placeholder="Enter your email" 
-                required
-                id="emailInput"
-            >
+            <input type="email" class="email-input" placeholder="Enter your email" required id="emailInput">
             <button type="submit" class="btn-primary">Join Waitlist</button>
         </form>
         <div class="success-message" id="successMessage">
@@ -44,17 +40,18 @@
         </div>
 
         <div class="video-section">
-    <video class="video-player" muted playsinline></video>
-    <video class="video-player" muted playsinline></video>
-    <video class="video-player" muted playsinline></video>
+            <video class="video-player" muted playsinline></video>
+            <video class="video-player" muted playsinline></video>
+            <video class="video-player" muted playsinline></video>
 
-    <div class="video-dots">
-        <div class="dot active" data-video="0"></div>
-        <div class="dot" data-video="1"></div>
-        <div class="dot" data-video="2"></div>
-    </div>
-</div>
-        
+            <div class="video-dots">
+                <div class="dot active" data-video="0"></div>
+                <div class="dot" data-video="1"></div>
+                <div class="dot" data-video="2"></div>
+            </div>
+        </div>
+
+
 
 
     </section>
@@ -88,10 +85,11 @@
     <footer class="footer" id="footer">
         <div class="footer-content">
             <div>&copy; 2025 Tabi. All rights reserved.</div>
-             <div class="footer-links">
+            <div class="footer-links">
                 <a href="mailto:contact@uarham.me">Contact</a>
             </div>
         </div>
     </footer>
 </body>
+
 </html>
