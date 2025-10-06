@@ -164,11 +164,25 @@
         margin-bottom: 4rem;
     }
 
-    .feature-grid {
+    /* .feature-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 2rem;
+    } */
+
+    .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Changed from auto-fit */
+    gap: 2rem;
+    max-width: 900px; /* Optional: constrain width */
+    margin: 0 auto; /* Optional: center it */
+}
+
+@media (max-width: 768px) {
+    .feature-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
     }
+}
 
     .feature-card {
         padding: 2rem;
