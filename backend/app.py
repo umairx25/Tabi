@@ -30,6 +30,8 @@ def root():
 
 @app.post("/agent")
 def agent_route(req: PromptRequest):
+    print(req.prompt)
+    print(req.context)
     try:
         result = run_agent(req.prompt + str(req.context["tabs"]))
         return JSONResponse(content={

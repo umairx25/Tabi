@@ -11,7 +11,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 dotenv = load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-2.5-pro"
+
 
 @tool(description="Given a list of tabs, find the tab user is looking for. Only return the tab title as a string", return_direct=True)
 def search_tabs(prompt:str, tabs):
@@ -89,48 +90,45 @@ def close_tabs(prompt:str, tabs):
         print(f"[Gemini Error] {e}")
 
 
-
-@tool(description="Organize tabs into groups or leave them ungrouped based on user instructions.", return_direct=True)
+@tool(
+    description="Organize or modify tabs/groups based on user instructions.",
+    return_direct=True
+)
 def organize_tabs(prompt: str, tabs: list[dict]):
     """
-    Example inputs:
-    - "Put all research tabs into group Research"
-    - "Move coding tabs into group Dev and finance tabs into group Money"
-    - "Place YouTube tabs in a new group called Videos"
-    - "Leave social media tabs ungrouped"
+    A unified tool that can:
+    - Reorganize existing tabs into groups
+    - Add new tabs to existing groups
+    - Create new groups if requested
+    - Leave groups untouched if not mentioned
     """
 
     try:
-        # Prepare the LLM
         llm = ChatGoogleGenerativeAI(model=MODEL, google_api_key=GEMINI_API_KEY)
         structured_llm = llm.with_structured_output(TabGroupList)
 
-        # Build a strict prompt
         llm_prompt = f"""
-        You are given a list of open browser tabs in JSON format:
+        You are a browser tab manager. You are given the user's current tab groups in JSON format:
         {tabs}
 
         User request: {prompt}
 
         Your task:
-        - Organize the tabs into logical groups based on the user's request.
-        - If a tab should remain ungrouped, put it in a group named "Ungrouped".
-        - Add new tab group ONLY if the user mentions a tab group you dont see in the list of tab groups.
-        - Only use the tabs provided in the input.
+        - Reorganize tabs or groups as needed based on the user's instructions.
+        - You may not remove or rename existing tab groups unless specified, can only add to it.
+        - You may add new tabs or new groups unless requested, always prioritize modifying using existing resources
+        - Do NOT remove or reorder existing tabs unless explicitly told to.
+        - If user wants to ungroup tab(s) from a group, make its new group ungrouped
         """
 
-        # Run the model
         result = structured_llm.invoke(llm_prompt)
 
-        print(result.model_dump())
-
-        # Return native Python dict
+        print("Organize Tabs Result:", result.model_dump())
         return result.model_dump()
 
     except Exception as e:
         print(f"[Gemini Error] {e}")
         return {"tabs": []}
-
 
 
 lst_tools = [
