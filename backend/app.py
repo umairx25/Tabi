@@ -32,8 +32,10 @@ def root():
 def agent_route(req: PromptRequest):
     print(req.prompt)
     print(req.context)
+
+    # + str(req.context["bookmarks"])
     try:
-        result = run_agent(req.prompt + str(req.context["tabs"]))
+        result = run_agent(req.prompt + str(req.context["tabs"]) + str(req.context["bookmarks"]))
         return JSONResponse(content={
             "output": result["output"],
             "action": result["action"]

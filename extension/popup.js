@@ -46,6 +46,38 @@ function setStatus(message, isLoading = false, isError = false) {
   }
 }
 
+/**
+ * Return all the bookmarks TITLES, cleaned and formatted
+ */
+async function getAllBookmarkTitles() {
+
+  return new Promise((resolve, reject) => {
+    chrome.bookmarks.getTree((nodes) => {
+      try {
+        const bookmarks = [];
+
+        const walk = (arr) => {
+          for (const n of arr) {
+            if (n.url) {
+              // push directly in the format show_results expects
+              bookmarks.push({
+                label: n.title, // first 2 words
+                type: "bookmark",
+              });
+            }
+            if (n.children) walk(n.children);
+          }
+        };
+
+        walk(nodes);
+        resolve(bookmarks);
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
 
 /**
  * Core function to execute the agent. Retrieve data using an http request, and 
@@ -69,6 +101,7 @@ async function execute_cmd() {
 
   const tabs = await chrome.tabs.query({ windowId: focusedWin.id });
   const tabGroups = await chrome.tabGroups.query({ windowId: focusedWin.id });
+  const bookmark_tree = await getBookmarkTree();
 
   console.warn("Tabs:", tabs)
   console.warn("Groups: ", tabGroups)
@@ -112,7 +145,7 @@ async function execute_cmd() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: userPrompt,
-        context: { tabs: groupedTabs},
+        context: { tabs: groupedTabs, bookmarks: bookmark_tree},
       }),
     });
 
@@ -171,10 +204,29 @@ async function handleAgentResponse(result, tabs, focusedWin) {
       await handleTabClosures(result.output.tabs);
       setStatus("Your tab have been cleaned up!");
       break;
+    
+    case "remove_bookmarks":
+      await handleBookmarkRemovals(result.output.bookmarks);
+      setStatus("Removed requested bookmarks!");
+      break;
+    
+    case "search_bookmarks":
+      const lst_bookmarks = result.output.bookmarks
+      await openBookmark(lst_bookmarks[0]);
+      setStatus("Your bookmark was found!");
+      break;
+    
+    case "organize_bookmarks":
+        await organizeBookmarksFrontend(result.output.reorganized_bookmarks);
+        if (result.output.tabs_to_add?.length > 0)
+          await saveTabsToBookmarkFolders(result.output.tabs_to_add);
+        setStatus("Bookmarks and tabs organized!");
+        break;
+
 
     default:
       console.warn("Unknown action from backend:", result.action);
-      setStatus("Unknown action returned from agent.", false, true);
+      setStatus("Sorry, Tabi can't do that yet!", false, true);
       break;
   }
 }
@@ -393,37 +445,6 @@ async function getBookmarkTree() {
   });
 }
 
-/**
- * Return all the bookmarks TITLES, cleaned and formatted
- */
-async function getAllBookmarkTitles() {
-
-  return new Promise((resolve, reject) => {
-    chrome.bookmarks.getTree((nodes) => {
-      try {
-        const bookmarks = [];
-
-        const walk = (arr) => {
-          for (const n of arr) {
-            if (n.url) {
-              // push directly in the format show_results expects
-              bookmarks.push({
-                label: n.title.split(/\s+/).slice(0, 2).join(" ").replace(/[#\-_|\\/\><,!`$%^&*()+=]/g, ""), // first 2 words
-                type: "bookmark",
-              });
-            }
-            if (n.children) walk(n.children);
-          }
-        };
-
-        walk(nodes);
-        resolve(bookmarks);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  });
-}
 
 window.addEventListener("message", async (event) => {
   if (event.data?.type === "FOCUS_SEARCH") {
@@ -445,9 +466,14 @@ window.addEventListener("message", async (event) => {
     }));
 
     const bookmark_titles = await getAllBookmarkTitles();  // returns array of strings
+    const bookmark_titles_formatted = bookmark_titles.map(b => ({
+          label: b.label.split(/\s+/).slice(0, 2).join(" ").replace(/[#\-_|\\/\><,!`$%^&*()+=]/g, ""),
+          type: "bookmark"
+        }));
+
 
     // Combine both lists into one
-    const all_tabs = [...tabTitles, ...bookmark_titles];
+    const all_tabs = [...tabTitles, ...bookmark_titles_formatted];
 
     show_results(all_tabs)
 
@@ -551,3 +577,125 @@ function show_results(list) {
   });
 }
 
+/**
+ * Deletes bookmarks returned by the backend (BookmarkTree schema)
+ */
+async function handleBookmarkRemovals(bookmarks) {
+  for (const bk of bookmarks) {
+    try {
+      await chrome.bookmarks.removeTree(bk.id); // removes folder or single bookmark
+    } catch (e) {
+      console.warn(`Failed to remove bookmark ${id}`, e);
+    }
+  }
+}
+
+
+/**
+ * Opens a bookmark purely using its Chrome ID (no URL field required).
+ * - If it's a single bookmark → open directly.
+ * - If it's a folder → open all contained bookmarks in new tabs.
+ */
+/**
+ * Opens a tab by switching to it if it exists, or creating it if it doesn't
+ */
+async function openBookmark(tab) {
+  if (!tab || !tab.url) {
+    console.warn("Invalid tab object:", tab);
+    return;
+  }
+
+  try {
+    // First, try to find if this tab is already open
+    const allTabs = await chrome.tabs.query({});
+    const existingTab = allTabs.find(t => t.url === tab.url);
+
+    if (existingTab) {
+      // Tab exists, switch to it
+      await chrome.tabs.update(existingTab.id, { active: true });
+      await chrome.windows.update(existingTab.windowId, { focused: true });
+      console.log(`Switched to existing tab: ${tab.title}`);
+    } else {
+      // Tab doesn't exist, create it
+      await chrome.tabs.create({ url: tab.url, active: true });
+      console.log(`Opened new tab: ${tab.title}`);
+    }
+  } catch (err) {
+    console.error("Failed to open tab:", err);
+  }
+}
+
+
+/**
+ * Reorganizes bookmarks by moving them into specified folders.
+ * Expects a flat list of {id, children: [...]}, etc.
+ */
+async function organizeBookmarksFrontend(bookmarkTree) {
+  try {
+    const moveRecursively = async (nodes, parentId = null) => {
+      for (const node of nodes) {
+        if (node.children && node.children.length > 0) {
+          // Move this node under new parent (if applicable)
+          if (parentId && node.id !== parentId) {
+            try {
+              await chrome.bookmarks.move(node.id, { parentId });
+            } catch (e) {
+              console.warn("Failed to move folder:", node.title, e);
+            }
+          }
+          // Recurse into children
+          await moveRecursively(node.children, node.id);
+        } else if (parentId) {
+          try {
+            await chrome.bookmarks.move(node.id, { parentId });
+          } catch (e) {
+            console.warn("Failed to move bookmark:", node.title, e);
+          }
+        }
+      }
+    };
+
+    await moveRecursively(bookmarkTree);
+  } catch (err) {
+    console.error("Failed to organize bookmarks:", err);
+  }
+}
+
+
+/**
+ * Creates bookmarks for given tabs into the specified folders.
+ * Expects output = [{ tab_title, tab_url, folder_title }]
+ */
+async function saveTabsToBookmarkFolders(mappings) {
+  try {
+    const allBookmarks = await chrome.bookmarks.getTree();
+
+    for (const { tab_title, tab_url, folder_title } of mappings) {
+      const folderNode = findFolderByTitle(allBookmarks, folder_title);
+      if (folderNode && folderNode.id && tab_url) {
+        await chrome.bookmarks.create({
+          parentId: folderNode.id,
+          title: tab_title,
+          url: tab_url,
+        });
+        console.log(`Bookmarked "${tab_title}" under "${folder_title}"`);
+      } else {
+        console.warn(`Could not find folder "${folder_title}" or invalid URL`);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to save tabs as bookmarks:", err);
+  }
+}
+
+/** Helper: Recursively find a folder by title */
+function findFolderByTitle(nodes, title) {
+  for (const node of nodes) {
+    if (node.title === title && !node.url) return node;
+    if (node.children) {
+      const found = findFolderByTitle(node.children, title);
+      if (found) return found;
+    }
+  }
+  return null;
+}

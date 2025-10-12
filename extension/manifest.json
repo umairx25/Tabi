@@ -48,7 +48,7 @@
         "default": "Ctrl+Shift+K",
         "mac": "Command+K"
       },
-      "description": "Open TidyTabs Command Bar"
+      "description": "Open Command Bar"
     }
   }
 
