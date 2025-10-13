@@ -105,6 +105,8 @@ async function execute_cmd() {
 
   console.warn(groupedTabs)
 
+  const client_id = await getClientId();
+
   // Send all the tabs, organized in tab groups, to the agent as context
   try {
     const response = await fetch(`${BACKEND_URL}/agent`, {
@@ -112,7 +114,7 @@ async function execute_cmd() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: userPrompt,
-        context: { tabs: groupedTabs},
+        context: { tabs: groupedTabs, client_id: client_id },
       }),
     });
 
@@ -369,6 +371,19 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+async function getClientId() {
+  const { client_id } = await chrome.storage.local.get("client_id");
+
+  if (!client_id) {
+    const new_id = crypto.randomUUID();
+    await chrome.storage.local.set({ client_id: new_id });
+    return new_id;
+  }
+
+  return client_id;
+}
+
+
 /**
  * Return all the bookmarks as a cleaned tree object
  */
@@ -446,8 +461,21 @@ window.addEventListener("message", async (event) => {
 
     const bookmark_titles = await getAllBookmarkTitles();  // returns array of strings
 
+    // Quick access to commonly used pages
+    const chrome_pages = [
+      { label: "Settings", type: "chrome_settings", url: "chrome://settings/" },
+      { label: "History", type: "chrome_history", url: "chrome://history/" },
+      { label: "Bookmarks", type: "chrome_bookmarks", url: "chrome://bookmarks/" },
+      { label: "Downloads", type: "chrome_downloads", url: "chrome://downloads/" },
+      { label: "Extensions", type: "chrome_extensions", url: "chrome://extensions/" },
+      { label: "Clear Browsing Data", type: "chrome_clear_data", url: "chrome://settings/clearBrowserData" },
+      { label: "Passwords", type: "chrome_passwords", url: "chrome://settings/passwords" },
+      { label: "Chrome Webstore", type: "chrome_webstore", url: "https://chromewebstore.google.com/"}
+    ];
+
+
     // Combine both lists into one
-    const all_tabs = [...tabTitles, ...bookmark_titles];
+    const all_tabs = [...tabTitles, ...bookmark_titles, ...chrome_pages];
 
     show_results(all_tabs)
 
@@ -493,15 +521,38 @@ function show_results(list) {
 
         // Text (render match markup properly)
         const text = document.createElement("span");
-        text.innerHTML = data.match; 
+        text.innerHTML = data.match;
         text.className = "result-text";
 
         // Icon (differentiate bookmarks and tabs)
         const icon = document.createElement("i");
-        icon.className =
-          data.value.type === "bookmark"
-            ? "fa-solid fa-bookmark result-icon bookmark"
-            : "fa-solid fa-globe result-icon tab";
+        const ICON_MAP = {
+          // existing types
+          "bookmark": "fa-solid fa-bookmark result-icon bookmark",
+          "tab": "fa-solid fa-globe result-icon tab",
+
+          // chrome:// pages
+          "chrome_settings": "fa-solid fa-gear result-icon chrome",
+          "chrome_history": "fa-solid fa-clock-rotate-left result-icon chrome",
+          "chrome_bookmarks": "fa-solid fa-book result-icon chrome",
+          "chrome_downloads": "fa-solid fa-download result-icon chrome",
+          "chrome_extensions": "fa-solid fa-puzzle-piece result-icon chrome",
+          "chrome_clear_data": "fa-solid fa-broom result-icon chrome",
+          "chrome_passwords": "fa-solid fa-key result-icon chrome",
+          "chrome_webstore": "fa-solid fa-bag-shopping"
+        };
+
+        const colorMap = {
+            "bookmark": "#00A2FF",
+            "chrome_bookmarks": "#00A2FF",
+            "tab": "#00ff99",
+            "chrome_settings": "#686f77",
+            "chrome_clear_data": "#FF6B6B",
+            "chrome_webstore": "#C792EA"
+        };
+
+        icon.className = ICON_MAP[data.value.type] || "fa-solid fa-circle-question result-icon";
+        icon.style=`color:${colorMap[data.value.type]};`
 
         // Layout container
         const wrapper = document.createElement("div");
@@ -542,6 +593,27 @@ function show_results(list) {
               await chrome.tabs.create({ url: bookmarks[0].url, active: true });
             } else {
               console.warn("Bookmark not found:", value.label);
+            }
+          }
+
+          else {
+            const CHROME_PAGES = {
+              chrome_settings: "chrome://settings/",
+              chrome_history: "chrome://history/",
+              chrome_bookmarks: "chrome://bookmarks/",
+              chrome_downloads: "chrome://downloads/",
+              chrome_extensions: "chrome://extensions/",
+              chrome_clear_data: "chrome://settings/clearBrowserData",
+              chrome_passwords: "chrome://settings/passwords",
+              chrome_webstore: "https://chromewebstore.google.com/"
+            };
+
+            const url = CHROME_PAGES[value.type];
+
+            if (url) {
+              await chrome.tabs.create({ url, active: true });
+            } else {
+              console.warn("Unknown chrome page type:", value.type);
             }
           }
         },
