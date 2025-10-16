@@ -25,7 +25,7 @@ function setStatus(message, isLoading = false, isError = false) {
   if (isLoading) {
     results.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;">
-        <span style="color:#cbd5e1;font-size:0.75rem;border:none">${message}</span>
+        <span style="color:#cbd5e1;font-size:0.85rem;border:none;font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;">${message}</span>
         <div class="progress">
           <div class="progress-value"></div>
         </div>
