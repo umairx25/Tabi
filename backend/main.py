@@ -9,11 +9,13 @@ from pydantic_ai import Agent
 from dataclasses import asdict
 from dotenv import load_dotenv
 from schemas import Result
+import os
+from pymongo import MongoClient
+from log import log_interaction
 
 # ---------- ENV / CONFIG ----------
 load_dotenv()
 MODEL = "google-gla:gemini-2.5-flash"
-
 
 # ---------- SYSTEM PROMPT ----------
 SYSTEM_PROMPT = """You are a careful browser assistant.
@@ -22,7 +24,8 @@ SYSTEM_PROMPT = """You are a careful browser assistant.
 - Prefer minimal, safe edits.
 - Outputs MUST validate against the declared Pydantic schema.
 Given tabs and user request, decide what to do AND return the result in one go. 
-When a request is vague, default to Generate
+When a request is vague, default to Generate.
+Also include how confident you are (from 0-1) on your intent matching.
 """
 
 
@@ -32,7 +35,7 @@ agent = Agent[None, Result](
     output_type= Result
 )
 
-# Single call
+
 async def run_agent(prompt: str, tabs: list[dict]):
     try:
         result = await agent.run(f"Tabs: {tabs}\nUser: {prompt}")
@@ -40,11 +43,14 @@ async def run_agent(prompt: str, tabs: list[dict]):
     except Exception as e:
         print("error: ", e)
     
-    # result.data is a Pydantic model (one of your Result union types)
-    # Convert it to a dict
+    # result.data is a Pydantic model (one of the Result union types), convert it to a dict
     output = asdict(result)["output"]
     
     print(f"\n\nAgent output of type ({type(output)}):", output)
     print(f"With model dumps (of type {type(output.dict())})", output.dict())
+
+    res = output.dict()
+
+    log_interaction(prompt, res["action"], res["confidence"], res["output"], tabs)
     
-    return output.dict()
+    return res

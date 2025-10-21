@@ -31,18 +31,22 @@ class TabGroupList(BaseModel):
 class SearchResult(BaseModel):
     action: str = Field(default="search_tabs")
     output: Tab  # Single tab that matches
+    confidence: float 
 
 class CloseResult(BaseModel):
     action: str = Field(default="close_tabs")
     output: TabList  # Multiple tabs to close
+    confidence: float
 
 class OrganizeResult(BaseModel):
     action: str = Field(default="organize_tabs")
     output: TabGroupList  # Organized groups
+    confidence: float
 
 class GenerateResult(BaseModel):
     action: str = Field(default="generate_tabs")
     output: TabGroup  # Organized groups
+    confidence: float
 
 # Union = "one of these types"
 Result = Union[SearchResult, CloseResult, OrganizeResult, GenerateResult]
