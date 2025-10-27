@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabi AI Privacy Policy</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      margin: 2rem auto;
+      max-width: 800px;
+      color: #222;
+      background-color: #fff;
+      padding: 0 1rem;
+    }
+    h1, h2 {
+      color: #000;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+    }
+    p {
+      margin-bottom: 1rem;
+    }
+    ul {
+      margin-left: 1.5rem;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tabi AI Privacy Policy</h1>
+  <p><strong>Last updated:</strong> October 2025</p>
+
+  <p>
+    Tabi AI is a privacy-first browser assistant that helps users interact with Chrome using natural language. 
+    It allows you to search, organize, and manage tabs and bookmarks intelligently — all without sending your browsing data to external servers.
+  </p>
+
+  <h2>1. Data Collection and Processing</h2>
+  <p>
+    Tabi AI does <strong>not collect, transmit, or store</strong> any personal data, browsing history, or website content. 
+    All processing happens locally on your device using Chrome’s built-in AI APIs (<code>chrome.ai.languageModel</code> and <code>chrome.ai.writer</code>).
+  </p>
+
+  <p>The extension temporarily accesses:</p>
+  <ul>
+    <li><strong>Tab metadata</strong> (title, URL) to perform local semantic search and organization.</li>
+    <li><strong>Bookmark metadata</strong> to organize, search, or remove bookmarks upon user request.</li>
+  </ul>
+  <p>
+    This data is never transmitted, logged, or shared externally. Once a task is complete, it is discarded from memory.
+  </p>
+
+  <h2>2. Permissions Explained</h2>
+  <p>
+    Tabi requests certain Chrome permissions solely to provide its single purpose — intelligent local browser assistance:
+  </p>
+  <ul>
+    <li><strong>tabs / tabGroups / windows:</strong> To view and organize open tabs.</li>
+    <li><strong>bookmarks:</strong> To search and modify user bookmarks on request.</li>
+    <li><strong>scripting:</strong> To run lightweight local scripts connecting to Chrome’s AI APIs.</li>
+    <li><strong>storage:</strong> To save minimal settings like theme or interface state.</li>
+    <li><strong>host_permissions ("&lt;all_urls&gt;"):</strong> Required to access tab titles and URLs for AI reasoning across any site — but no page content is read or modified.</li>
+  </ul>
+
+  <h2>3. Remote Code and External Services</h2>
+  <p>
+    Tabi AI does not use any remote code, external JavaScript, or third-party analytics.
+    All scripts are bundled within the extension package and reviewed by Chrome Web Store policies.
+  </p>
+
+  <h2>4. Data Sharing and Sale</h2>
+  <p>
+    Tabi AI does not sell, share, or transfer user data to any third party. 
+    No data is used for advertising, analytics, or profiling.
+  </p>
+
+  <h2>5. Transparency and Control</h2>
+  <p>
+    All AI actions are visible to the user. When a task is processed locally, it is executed by Chrome’s on-device Gemini Nano model. 
+    For rare fallback cases that use the Gemini 2.5 Flash backend, only non-personal task context is sent and not logged.
+  </p>
+
+  <h2>6. Contact</h2>
+  <p>
+    For privacy-related questions or feedback, contact the developer at:
+    <a href="mailto:contact@tabiai.dev">contact@tabiai.dev</a>
+  </p>
+
+  <footer>
+    <p>© 2025 Tabi AI. All rights reserved.</p>
+  </footer>
+</body>
+</html>
