@@ -51,7 +51,7 @@ app = FastAPI(lifespan=lifespan)
 # Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://tabi-api.onrender.com", "http://127.0.0.1:8000"],
+    allow_origins=["https://tabi-api-10z9.onrender.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
