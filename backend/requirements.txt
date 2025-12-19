@@ -1,0 +1,6 @@
+fastapi==0.125.0
+pydantic==2.12.5
+pydantic_ai==1.36.0
+python-dotenv==1.2.1
+redis==5.2.1
+uvicorn==0.38.0
