@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tabi Privacy Policy</title>
+  <link rel="icon" type="image/png" href="assets/icon.png" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .policy-container {
+      max-width: 900px;
+      margin: 4rem auto;
+      padding: 2.5rem;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 255, 153, 0.1);
+      border-radius: 24px;
+      backdrop-filter: blur(12px);
+      color: #d5e1f5;
+      line-height: 1.6;
+    }
+
+    .policy-container h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #00ff99;
+    }
+
+    .policy-container h2 {
+      font-size: 1.4rem;
+      margin-top: 2rem;
+      color: #aee0ff;
+    }
+
+    .policy-container p,
+    .policy-container li {
+      font-size: 1rem;
+      color: #c7d7f3;
+    }
+
+    .policy-container ul {
+      padding-left: 1.5rem;
+    }
+
+    .policy-footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #88a2c2;
+      font-size: 0.9rem;
+    }
+
+    .policy-footer a {
+      color: #00ff99;
+      text-decoration: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="policy-container">
+    <h1>Tabi Privacy Policy</h1>
+    <p>Updated: December 19, 2025</p>
+    <br>
+    <p>
+      Tabi is a Chrome extension and companion backend that helps you organize, search, and manage your browser tabs using natural-language commands. This policy explains what information we collect, how we use it, and how we keep it safe.
+    </p>
+
+    <h2>Information We Collect</h2>
+    <ul>
+      <li><strong>Tab metadata:</strong> Titles, URLs, and tab group names you choose to share when you invoke Tabi.</li>
+      <li><strong>Local identifiers:</strong> A randomly generated client ID and auth signature stored in your browser storage for authentication.</li>
+    </ul>
+
+    <p>We do <strong>not</strong> collect your personal communications, passwords, or payment information.</p>
+
+    <h2>How We Use Information</h2>
+    <ul>
+      <li>Process your requests (search, organize, generate, or close tabs) via our backend.</li>
+      <li>Return structured instructions to the extension so it can act locally in your browser.</li>
+      <li>Maintain the security and reliability of the service (rate limiting, abuse prevention).</li>
+      <li>Improve product performance and detect issues.</li>
+    </ul>
+
+    <h2>Data Sharing</h2>
+    <p>
+      We do not sell, rent, or trade your data. We only share data with trusted infrastructure providers (e.g., Render, Redis) as needed to operate the service. Data stays within the scope of Tabi’s tab-management features and is never used for creditworthiness or unrelated purposes.
+    </p>
+
+    <h2>Storage & Security</h2>
+    <p>
+      Client IDs and tokens remain in your local Chrome storage. Tab metadata is transmitted via HTTPS to our backend solely for the duration of processing your request and is not stored long-term. We apply authentication, rate limiting, and logging best practices to protect user data.
+    </p>
+
+    <h2>Your Choices</h2>
+    <ul>
+      <li>You can uninstall the extension at any time to stop data collection.</li>
+      <li>You can clear Chrome’s storage to remove the local client ID and token.</li>
+      <li>Contact us if you have questions or requests regarding your data.</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>Email <a href="mailto:contact@uarham.me">contact@uarham.me</a> for any privacy inquiries.</p>
+
+    <div class="policy-footer">
+      &copy; 2025 Tabi. All rights reserved.
+    </div>
+  </div>
+</body>
+
+</html>
