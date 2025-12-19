@@ -14,14 +14,13 @@ import redis
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-# Load from local folder (or Hugging Face Hub if you pushed it there)
-
 dotenv = load_dotenv()
 REDIS_API_LINK = os.getenv("REDIS_API_LINK")
 REDIS_API_PWD = os.getenv("REDIS_API_PWD")
-RATE_LIMIT = 500000
-IP_RATE_LIMIT = 250000 
-GLOBAL_RATE_LIMIT = 1000000
+REDIS_PORT = os.getenv("REDIS_PORT")
+RATE_LIMIT = 50
+IP_RATE_LIMIT = 25
+GLOBAL_RATE_LIMIT = 400
 WINDOW = 3600
 
 """
@@ -33,7 +32,7 @@ async def lifespan(app: FastAPI):
     # Startup
     app.state.redis = redis.Redis(
         host=REDIS_API_LINK ,
-        port=13530,
+        port=REDIS_PORT,
         username="default",
         password=REDIS_API_PWD,
         decode_responses=True,
@@ -52,7 +51,7 @@ app = FastAPI(lifespan=lifespan)
 # Allow frontend to connect
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://tabi-api.onrender.com", "http://127.0.0.1:8000"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -141,19 +140,15 @@ def root():
 
 @app.post("/agent")
 async def agent_route(req: PromptRequest):
-    print(req.prompt)
-    print(req.context)
     try:
         result = await run_agent(req.prompt, (req.context["tabs"]))
-        print("Result in app: ", result)
-
         return JSONResponse(content={
             "output": result["output"],
             "action": result["action"]
         })
     except Exception as e:
-        print("Agent error:", e)
-        return JSONResponse(status_code=500, content={"error": str(e)})
+        # print("Agent error:", e)
+        return JSONResponse(status_code=500, content={"Error encountered"})
 
 
 if __name__ == "__main__":

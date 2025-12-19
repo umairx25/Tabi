@@ -36,15 +36,12 @@ agent = Agent[None, Result](
 async def run_agent(prompt: str, tabs: list[dict]):
     try:
         result = await agent.run(f"Tabs: {tabs}\nUser: {prompt}")
+        # result.data is a Pydantic model (one of your Result union types)
+        # Convert it to a dict
+        output = asdict(result)["output"]
+        
+        return output.dict()
     
     except Exception as e:
-        print("error: ", e)
+        return e
     
-    # result.data is a Pydantic model (one of your Result union types)
-    # Convert it to a dict
-    output = asdict(result)["output"]
-    
-    print(f"\n\nAgent output of type ({type(output)}):", output)
-    print(f"With model dumps (of type {type(output.dict())})", output.dict())
-    
-    return output.dict()
