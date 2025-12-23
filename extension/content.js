@@ -23,16 +23,15 @@ script injection, including displaying and removing the overlay.
       "left: 52%",
       "transform: translate(-50%, -50%)",
       "width: 600px",
-      "height: 180px", 
+      "height: 400px", 
       "z-index: 2147483647",
       "display: flex",
       "align-items: stretch",
       "justify-content: stretch",
-      "pointer-events: none"
+      "pointer-events: none",
     ].join(";");
 
-
-
+    // Remove overlay if mouse click detected outside
     overlayEl.addEventListener("mousedown", (e) => {
     if (e.target === overlayEl) {
       destroyOverlay();
@@ -42,7 +41,7 @@ script injection, including displaying and removing the overlay.
     document.documentElement.appendChild(overlayEl);
     shadow = overlayEl.attachShadow({ mode: "open" });
 
-    // Shadow DOM wrapper
+    // Shadow DOM wrapper so transparent background can be achieved
     const wrapper = document.createElement("div");
     wrapper.style.cssText = [
       "all: initial",
@@ -54,7 +53,6 @@ script injection, including displaying and removing the overlay.
       "overflow: hidden",
       "box-shadow: 0 12px 34px rgba(0,0,0,0.35)",
       "box-shadow: none",
-    //   "background: #1f2937"
       "background: transparent"
     ].join(";");
 
@@ -103,7 +101,6 @@ script injection, including displaying and removing the overlay.
       "height: 100%",
       "border: 0",
       "background: transparent",
-      "background: transparent",     // already here
       "color-scheme: none",          // prevent dark reader theme injection
       "allowtransparency: true",     // important for iframe bg
     ].join(";");
@@ -120,7 +117,7 @@ script injection, including displaying and removing the overlay.
 
     shadow.appendChild(wrapper);
 
-    // ESC closes overlay
+    // Esc closes overlay
     window.addEventListener("keydown", escListener, true);
 
     // Click outside to close
@@ -131,15 +128,8 @@ script injection, including displaying and removing the overlay.
       "pointer-events: auto",
       "background: transparent"
     ].join(";");
-    backdrop.addEventListener("mousedown", (e) => {
-      const rect = overlayEl.getBoundingClientRect();
-      if (e.clientX < rect.left || e.clientY > rect.bottom) {
-        destroyOverlay();
-      }
-      
-    });
 
-    // new
+    // Close overlay if click detected outside
     backdrop.addEventListener("mousedown", () => {
     destroyOverlay();
   });
@@ -150,6 +140,7 @@ script injection, including displaying and removing the overlay.
     overlayOpen = true;
   }
 
+  // Destroy the current overlay
   function destroyOverlay() {
     if (!overlayEl) return;
     window.removeEventListener("keydown", escListener, true);
@@ -167,6 +158,7 @@ script injection, including displaying and removing the overlay.
     }
   }
 
+  // Toggle the overlay
   function toggleOverlay() {
     if (overlayOpen) destroyOverlay();
     else createOverlay();

@@ -7,7 +7,9 @@
     "tabs",
     "tabGroups",
     "windows",
-    "scripting"
+    "scripting",
+    "bookmarks",
+    "storage"
   ],
 
   "host_permissions": ["<all_urls>"],
@@ -23,7 +25,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "TidyTabs AI"
+    "default_title": "Tabi"
   },
   "content_scripts": [
     {
@@ -36,7 +38,6 @@
     "resources": [
       "popup.html",
       "popup.js",
-      "config.js",
       "style.css"
     ],
     "matches": ["<all_urls>"]
@@ -47,7 +48,7 @@
         "default": "Ctrl+Shift+K",
         "mac": "Command+K"
       },
-      "description": "Open TidyTabs Command Bar"
+      "description": "Open Tabi Command Bar"
     }
   }
 
