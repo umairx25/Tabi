@@ -10,6 +10,10 @@ Tabi is a command palette that sits on top of your browser and lets you tell an 
 - **Bootstraps new sessions.** Describe a task ("plan a Yosemite trip") and the backend suggests and opens a curated set of tabs inside a labeled Chrome group.
 - **Remembers quick actions.** Autocomplete lets you jump to any tab, bookmark, or common Chrome page (Settings, Downloads, Extensions, etc.) before you even talk to the agent.
 
+[![Tabi demo thumbnail showing the overlay UI](https://img.youtube.com/vi/gLh0bX87wIg/hqdefault.jpg)](https://www.youtube.com/watch?v=gLh0bX87wIg)
+
+# Developer Guide
+
 ## Architecture
 
 | Layer | Purpose | Key Files |
