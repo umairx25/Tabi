@@ -1,6 +1,6 @@
 const videoSources = [
-    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707439/tabi_remove_uiua2i.mp4',
-    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707641/tabi_generate_gf4lqw.mp4',
+    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707725/tabi_find_hz6h3c.mp4',
+    'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707725/tabi_find_hz6h3c.mp4',
     'https://res.cloudinary.com/dqy3ymble/video/upload/v1759707725/tabi_find_hz6h3c.mp4',
 ];
 

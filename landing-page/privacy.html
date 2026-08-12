@@ -62,39 +62,41 @@
     <p>Updated: December 19, 2025</p>
     <br>
     <p>
-      Tabi is a Chrome extension and companion backend that helps you organize, search, and manage your browser tabs using natural-language commands. This policy explains what information we collect, how we use it, and how we keep it safe.
+      Tabi is a Chrome extension that helps you search and switch between browser tabs, bookmarks, common Chrome pages, and optional AI browser actions. This policy explains what information the extension uses and when data leaves your browser.
     </p>
 
     <h2>Information We Collect</h2>
     <ul>
-      <li><strong>Tab metadata:</strong> Titles, URLs, and tab group names you choose to share when you invoke Tabi.</li>
-      <li><strong>Local identifiers:</strong> A randomly generated client ID and auth signature stored in your browser storage for authentication.</li>
+      <li><strong>Tab metadata:</strong> Titles and URLs used locally when you invoke Tabi.</li>
+      <li><strong>Bookmark metadata:</strong> Bookmark titles and URLs used locally for search results.</li>
+      <li><strong>Local storage:</strong> Recent tab IDs used to show your most recently used tabs.</li>
+      <li><strong>AI request context:</strong> If you select Ask AI, Tabi sends your prompt and current tab context to the backend so the AI action can be processed.</li>
     </ul>
 
     <p>We do <strong>not</strong> collect your personal communications, passwords, or payment information.</p>
 
     <h2>How We Use Information</h2>
     <ul>
-      <li>Process your requests (search, organize, generate, or close tabs) via our backend.</li>
-      <li>Return structured instructions to the extension so it can act locally in your browser.</li>
-      <li>Maintain the security and reliability of the service (rate limiting, abuse prevention).</li>
-      <li>Improve product performance and detect issues.</li>
+      <li>Search open tabs, bookmarks, and built-in Chrome destinations.</li>
+      <li>Switch to an existing tab or open the selected destination.</li>
+      <li>Show recent tabs when the search box opens.</li>
+      <li>Process explicit Ask AI requests and return structured browser actions.</li>
     </ul>
 
     <h2>Data Sharing</h2>
     <p>
-      We do not sell, rent, or trade your data. We only share data with trusted infrastructure providers (e.g., Render, Redis) as needed to operate the service. Data stays within the scope of Tabi’s tab-management features and is never used for creditworthiness or unrelated purposes.
+      We do not sell, rent, or trade your data. Local search happens inside Chrome. Ask AI requests are transmitted only when you select the Ask AI result.
     </p>
 
     <h2>Storage & Security</h2>
     <p>
-      Client IDs and tokens remain in your local Chrome storage. Tab metadata is transmitted via HTTPS to our backend solely for the duration of processing your request and is not stored long-term. We apply authentication, rate limiting, and logging best practices to protect user data.
+      Recent tab IDs remain in your local Chrome storage. Tab and bookmark metadata is not sent to a Tabi backend for ordinary search; it is sent only for explicit Ask AI requests.
     </p>
 
     <h2>Your Choices</h2>
     <ul>
       <li>You can uninstall the extension at any time to stop data collection.</li>
-      <li>You can clear Chrome’s storage to remove the local client ID and token.</li>
+      <li>You can clear Chrome’s extension storage to remove locally stored recent-tab data.</li>
       <li>Contact us if you have questions or requests regarding your data.</li>
     </ul>
 

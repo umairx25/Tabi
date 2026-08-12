@@ -12,6 +12,62 @@ script injection, including displaying and removing the overlay.
   let overlayOpen = false;
   let overlayEl = null;
   let shadow = null;
+  let overlayTemporarilyHidden = false;
+  let titleObserver = null;
+  let activeAlias = "";
+  let lastNaturalTitle = document.title;
+
+  function normalizeUrlForAlias(url = "") {
+    try {
+      const parsed = new URL(url);
+      parsed.hash = "";
+      return parsed.href;
+    } catch {
+      return url;
+    }
+  }
+
+  async function applyStoredAlias() {
+    const aliasKey = normalizeUrlForAlias(window.location.href);
+    const { tabAliasesByUrl = {} } = await chrome.storage.local.get("tabAliasesByUrl");
+    const alias = tabAliasesByUrl[aliasKey]?.alias || "";
+    applyAlias(alias);
+  }
+
+  function applyAlias(alias, fallbackTitle = "") {
+    if (activeAlias && document.title !== activeAlias) {
+      lastNaturalTitle = document.title;
+    } else if (!activeAlias && document.title) {
+      lastNaturalTitle = document.title;
+    }
+
+    activeAlias = alias || "";
+
+    if (titleObserver) {
+      titleObserver.disconnect();
+      titleObserver = null;
+    }
+
+    if (!activeAlias) {
+      const restoredTitle = fallbackTitle || lastNaturalTitle;
+      if (restoredTitle) document.title = restoredTitle;
+      return;
+    }
+
+    document.title = activeAlias;
+    titleObserver = new MutationObserver(() => {
+      if (activeAlias && document.title !== activeAlias) {
+        document.title = activeAlias;
+      }
+    });
+    titleObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }
+
+  applyStoredAlias();
 
 /* Creates the overlay injected into the DOM*/
   function createOverlay() {
@@ -23,7 +79,7 @@ script injection, including displaying and removing the overlay.
       "left: 52%",
       "transform: translate(-50%, -50%)",
       "width: 600px",
-      "height: 400px", 
+      "height: 620px", 
       "z-index: 2147483647",
       "display: flex",
       "align-items: stretch",
@@ -106,6 +162,7 @@ script injection, including displaying and removing the overlay.
     ].join(";");
 
     iframe.setAttribute("allowtransparency", "true");
+    iframe.setAttribute("allow", "clipboard-write");
     iframe.setAttribute("data-darkreader-ignore", "");
 
 
@@ -119,6 +176,7 @@ script injection, including displaying and removing the overlay.
 
     // Esc closes overlay
     window.addEventListener("keydown", escListener, true);
+    window.addEventListener("message", messageListener, true);
 
     // Click outside to close
     const backdrop = document.createElement("div");
@@ -144,6 +202,7 @@ script injection, including displaying and removing the overlay.
   function destroyOverlay() {
     if (!overlayEl) return;
     window.removeEventListener("keydown", escListener, true);
+    window.removeEventListener("message", messageListener, true);
     overlayEl.__backdrop?.remove();
     overlayEl.remove();
     overlayEl = null;
@@ -158,6 +217,153 @@ script injection, including displaying and removing the overlay.
     }
   }
 
+  function messageListener(e) {
+    if (e.data?.type === "TABI_CLOSE") {
+      destroyOverlay();
+    }
+
+    if (e.data?.type === "TABI_TEMP_HIDE") {
+      setOverlayTemporarilyHidden(true);
+    }
+
+    if (e.data?.type === "TABI_TEMP_SHOW") {
+      setOverlayTemporarilyHidden(false);
+    }
+  }
+
+  function setOverlayTemporarilyHidden(hidden) {
+    if (!overlayEl) return;
+    overlayTemporarilyHidden = hidden;
+    overlayEl.style.opacity = hidden ? "0" : "1";
+    overlayEl.style.visibility = hidden ? "hidden" : "visible";
+    overlayEl.style.pointerEvents = "none";
+  }
+
+  function getPageCaptureMetrics() {
+    const doc = document.documentElement;
+    const body = document.body;
+    const fullHeight = Math.max(
+      doc.scrollHeight,
+      doc.offsetHeight,
+      doc.clientHeight,
+      body?.scrollHeight || 0,
+      body?.offsetHeight || 0,
+      body?.clientHeight || 0,
+    );
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      fullHeight,
+      pixelRatio: window.devicePixelRatio || 1,
+      title: document.title || "tabi-screenshot",
+    };
+  }
+
+  async function captureFullPage(captureId) {
+    const metrics = getPageCaptureMetrics();
+    const maxCanvasSide = 32767;
+    const maxCanvasPixels = 80_000_000;
+    const canvasWidth = Math.floor(metrics.viewportWidth * metrics.pixelRatio);
+    const canvasHeight = Math.floor(metrics.fullHeight * metrics.pixelRatio);
+
+    if (!metrics.viewportWidth || !metrics.viewportHeight || !metrics.fullHeight) {
+      throw new Error("Could not measure this page.");
+    }
+
+    if (canvasWidth > maxCanvasSide || canvasHeight > maxCanvasSide || canvasWidth * canvasHeight > maxCanvasPixels) {
+      throw new Error("Page is too large to capture safely.");
+    }
+
+    const originalScrollX = window.scrollX;
+    const originalScrollY = window.scrollY;
+    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+    const positions = getCaptureScrollPositions(metrics.fullHeight, metrics.viewportHeight);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+    const context = canvas.getContext("2d");
+
+    document.documentElement.style.scrollBehavior = "auto";
+    setOverlayTemporarilyHidden(true);
+
+    try {
+      for (let index = 0; index < positions.length; index++) {
+        const y = positions[index];
+        window.scrollTo(originalScrollX, y);
+        await waitForCaptureFrame();
+
+        chrome.runtime.sendMessage({
+          type: "TABI_SCREENSHOT_PROGRESS",
+          captureId,
+          current: index + 1,
+          total: positions.length,
+        });
+
+        const capture = await captureVisibleViewport();
+        if (!capture.success) throw new Error(capture.error || "Failed to capture page.");
+        const image = await loadImage(capture.dataUrl);
+        const sourceHeight = Math.min(metrics.viewportHeight, metrics.fullHeight - y) * metrics.pixelRatio;
+        context.drawImage(
+          image,
+          0,
+          0,
+          image.width,
+          Math.min(image.height, sourceHeight),
+          0,
+          Math.floor(y * metrics.pixelRatio),
+          canvasWidth,
+          Math.min(image.height, sourceHeight),
+        );
+      }
+
+      return {
+        dataUrl: canvas.toDataURL("image/png"),
+        width: canvasWidth,
+        height: canvasHeight,
+        title: metrics.title,
+      };
+    } finally {
+      window.scrollTo(originalScrollX, originalScrollY);
+      document.documentElement.style.scrollBehavior = originalScrollBehavior;
+      setOverlayTemporarilyHidden(false);
+    }
+  }
+
+  function getCaptureScrollPositions(fullHeight, viewportHeight) {
+    if (fullHeight <= viewportHeight) return [0];
+    const positions = [];
+    for (let y = 0; y < fullHeight; y += viewportHeight) {
+      positions.push(Math.min(y, fullHeight - viewportHeight));
+    }
+    return [...new Set(positions)];
+  }
+
+  function waitForCaptureFrame() {
+    return new Promise(resolve => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setTimeout(resolve, 160));
+      });
+    });
+  }
+
+  function captureVisibleViewport() {
+    return new Promise(resolve => {
+      chrome.runtime.sendMessage({ type: "TABI_CAPTURE_VISIBLE" }, response => {
+        resolve(response || { success: false, error: chrome.runtime.lastError?.message });
+      });
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Failed to load screenshot slice."));
+      image.src = src;
+    });
+  }
+
   // Toggle the overlay
   function toggleOverlay() {
     if (overlayOpen) destroyOverlay();
@@ -165,9 +371,23 @@ script injection, including displaying and removing the overlay.
   }
 
   // Message from background.js to toggle
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg?.type === "tabi_TOGGLE") {
       toggleOverlay();
+    }
+
+    if (msg?.type === "TABI_APPLY_ALIAS") {
+      applyAlias(msg.alias || "", msg.originalTitle || "");
+    }
+
+    if (msg?.type === "TABI_CAPTURE_FULL_PAGE") {
+      captureFullPage(msg.captureId)
+        .then(result => sendResponse({ success: true, ...result }))
+        .catch(error => sendResponse({
+          success: false,
+          error: error?.message || "Full page screenshot failed.",
+        }));
+      return true;
     }
   });
 
