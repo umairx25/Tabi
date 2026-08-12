@@ -1,18 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Tabi",
-  "version": "0.1",
-  "description": "An intelligence layer for your browser.",
+  "version": "0.2",
+  "description": "Tabi is a command bar for Chrome that allows you to rename tabs, search tabs and bookmarks, and use quick tools from one place.",
   "permissions": [
     "tabs",
     "tabGroups",
     "windows",
     "scripting",
     "bookmarks",
-    "storage"
+    "storage",
+    "clipboardWrite"
   ],
 
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": ["https://tabi-api-10z9.onrender.com"],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -48,7 +49,7 @@
         "default": "Ctrl+Shift+K",
         "mac": "Command+K"
       },
-      "description": "Open Tabi Command Bar"
+      "description": "Open Tabi Search"
     }
   }
 

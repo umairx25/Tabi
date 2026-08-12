@@ -44,5 +44,9 @@ class GenerateResult(BaseModel):
     action: str = Field(default="generate_tabs")
     output: TabGroup  # Organized groups
 
+class AnswerResult(BaseModel):
+    action: str = Field(default="answer_question")
+    output: str = Field(..., description="A concise one-off answer to the user's question")
+
 # Union = "one of these types"
-Result = Union[SearchResult, CloseResult, OrganizeResult, GenerateResult]
+Result = Union[SearchResult, CloseResult, OrganizeResult, GenerateResult, AnswerResult]
