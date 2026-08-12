@@ -169,6 +169,19 @@ function normalizeUrlForAlias(url = "") {
   }
 }
 
+function getDirectUrl(value = "") {
+  const trimmed = value.trim();
+  if (!/^https?:\/\//i.test(trimmed)) return "";
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!parsed.hostname || parsed.hostname.includes(" ")) return "";
+    return parsed.href;
+  } catch {
+    return "";
+  }
+}
+
 function escapeHtml(value = "") {
   return value.replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -259,13 +272,14 @@ function groupResults(query) {
   const shouldShowAi = query && (activeFilter === "all" || activeFilter === "ai");
 
   if (shouldShowWeb) {
+    const directUrl = getDirectUrl(query);
     candidates.push({
       id: `web:${query}`,
       section: "web",
-      label: `Search Google for "${query}"`,
-      url: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-      domain: "google.com",
-      icon: "fa-magnifying-glass",
+      label: directUrl ? `Open ${directUrl}` : `Search Google for "${query}"`,
+      url: directUrl || `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      domain: directUrl ? getDomain(directUrl) : "google.com",
+      icon: directUrl ? "fa-arrow-up-right-from-square" : "fa-magnifying-glass",
       score: activeFilter === "web" || !hasLocalResults ? 1000 : 0,
     });
   }
