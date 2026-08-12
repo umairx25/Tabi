@@ -11,6 +11,25 @@ var CMD_HEIGHT = 100;
 var left;
 var right;
 var height;
+const MAX_RECENT_TABS = 25;
+
+async function rememberRecentTab(tabId) {
+  if (!tabId) return;
+  const { recentTabIds = [] } = await chrome.storage.local.get("recentTabIds");
+  const nextIds = [tabId, ...recentTabIds.filter(id => id !== tabId)].slice(0, MAX_RECENT_TABS);
+  await chrome.storage.local.set({ recentTabIds: nextIds });
+}
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  rememberRecentTab(tabId);
+});
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { recentTabIds = [] } = await chrome.storage.local.get("recentTabIds");
+  await chrome.storage.local.set({
+    recentTabIds: recentTabIds.filter(id => id !== tabId),
+  });
+});
 
 // Click on toolbar icon opens the search bar
 chrome.action.onClicked.addListener(async () => {
@@ -108,34 +127,59 @@ chrome.commands.onCommand.addListener(async (command) => {
 
 
 // Switch to browser window when message is received from popup.js
-chrome.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "TABI_CAPTURE_VISIBLE") {
+    (async () => {
+      try {
+        const windowId = sender.tab?.windowId ?? chrome.windows.WINDOW_ID_CURRENT;
+        const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
+          format: "png",
+        });
+        sendResponse({ success: true, dataUrl });
+      } catch (error) {
+        sendResponse({
+          success: false,
+          error: error?.message || "Failed to capture visible tab",
+        });
+      }
+    })();
+    return true;
+  }
+
   if (msg.type === "SWITCH_TAB" && msg.title) {
-    const targetTitle = msg.title.trim().toLowerCase();
+    (async () => {
+      const targetTitle = msg.title.trim().toLowerCase();
 
-    // Search across browser windows
-    const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ["normal"] });
-    const tabs = allWindows.flatMap(w => w.tabs || []);
+      // Search across browser windows
+      const allWindows = await chrome.windows.getAll({ populate: true, windowTypes: ["normal"] });
+      const tabs = allWindows.flatMap(w => w.tabs || []);
 
-    // Try exact, then substring match
-    const norm = t => (t.title || "").toLowerCase();
-    let candidates = tabs.filter(t => norm(t) === targetTitle);
-    if (!candidates.length) {
-      candidates = tabs.filter(t => norm(t).includes(targetTitle));
-    }
+      // Try exact, then substring match
+      const norm = t => (t.title || "").toLowerCase();
+      let candidates = tabs.filter(t => norm(t) === targetTitle);
+      if (!candidates.length) {
+        candidates = tabs.filter(t => norm(t).includes(targetTitle));
+      }
 
-    // Pick most recent tab
-    candidates.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
-    const target = candidates[0];
+      // Pick most recent tab
+      candidates.sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+      const target = candidates[0];
 
-    if (target) {
-      await chrome.windows.update(target.windowId, { focused: true });
-      await chrome.tabs.update(target.id, { active: true });
-      console.log(`Switched to tab: ${target.title}`);
-      sendResponse({ success: true, tab: target });
-    } else {
-      console.log(`No tab found for "${msg.title}"`);
-      sendResponse({ success: false });
-    }
-    return true; 
+      if (target) {
+        await chrome.windows.update(target.windowId, { focused: true });
+        await chrome.tabs.update(target.id, { active: true });
+        console.log(`Switched to tab: ${target.title}`);
+        sendResponse({ success: true, tab: target });
+      } else {
+        console.log(`No tab found for "${msg.title}"`);
+        sendResponse({ success: false });
+      }
+    })().catch(error => {
+      sendResponse({
+        success: false,
+        error: error?.message || "Failed to switch tab",
+      });
+    });
+    return true;
   }
 });

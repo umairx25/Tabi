@@ -1,118 +1,62 @@
 # Tabi
 
-Tabi is a command palette that sits on top of your browser and lets you tell an AI assistant what to do with your tabs in plain English. Ask it to clean up distractions, find a tab you lost, or spin up an entire research workspace and Tabi will take care of the clicks for you.
+## TL;DR
+Tabi is a lightweight Chrome extension for fast tab switching and universal Chrome search. Press one shortcut to jump to recent tabs, search open tabs, open bookmarks, launch common Chrome pages, ask AI for browser actions, or fall back to a Google search.
 
-## Features
+## GitHub
+[https://github.com/umairx25/Tabi](https://github.com/umairx25/Tabi)
 
-- **One command bar for everything.** Tap the toolbar icon or `Cmd + K` (`Ctrl + Shift + K` on Windows) to open Tabi anywhere and type natural language requests.
-- **Understands your current window.** The extension sends the titles, urls, and groupings of your open tabs so the assistant always reasons over the real state of your browser.
-- **Cleans and organizes.** Ask to close redundant tabs, regroup workspaces (ex: "sort my school tabs by class"), or move noisy tabs into an "Ungrouped" bucket.
-- **Bootstraps new sessions.** Describe a task ("plan a Yosemite trip") and the backend suggests and opens a curated set of tabs inside a labeled Chrome group.
-- **Remembers quick actions.** Autocomplete lets you jump to any tab, bookmark, or common Chrome page (Settings, Downloads, Extensions, etc.) before you even talk to the agent.
+Demo: [YouTube walkthrough](https://www.youtube.com/watch?v=gLh0bX87wIg)
+
+## Tech Stack
+- **JavaScript / Chrome Extension Manifest V3**: Powers the browser overlay, keyboard shortcut, tab/bookmark access, local recent-tab tracking, and tab switching directly inside Chrome.
+- **HTML/CSS**: Implements the injected Spotlight-style search UI and static landing page.
+- **FastAPI / pydantic-ai**: Powers the explicit `Ask AI` category for browser actions such as organizing, generating, finding, or closing tabs.
+- **SheetDB**: Stores waitlist submissions from the landing page.
 
 ## Architecture
+Tabi is split into three active parts:
 
-| Layer | Purpose | Key Files |
-| --- | --- | --- |
-| Chrome extension | Injects the overlay UI (`content.js`), listens for hotkeys (`background.js`), renders the command bar (`popup.html/css/js`), and applies agent decisions by grouping, closing, or opening tabs. | `extension/*` |
-| Backend API | FastAPI app that accepts `/agent` requests from the extension, enforces user/IP/global rate limits via Redis, and returns structured instructions the extension can execute safely. | `backend/app.py` |
-| Agent runtime | Runs a `pydantic_ai.Agent` powered by Gemini 2.5 Flash. It receives the prompt plus tab context, chooses an action (`search_tabs`, `close_tabs`, `organize_tabs`, `generate_tabs`), and sends a strictly typed payload back. | `backend/main.py`, `backend/schemas.py` |
+1. **Chrome extension (`extension/`)**
+   - `content.js` injects a Shadow DOM overlay into the current page.
+   - `background.js` listens for toolbar clicks and `Cmd+K` / `Ctrl+Shift+K`, toggles the overlay, handles cross-window tab switching, and tracks most-recently-used tabs locally.
+   - `popup.js` renders the search experience, ranks local results, groups results by hierarchy section, executes selected Chrome actions, and routes `Ask AI` queries to the backend.
 
+2. **Backend API (`backend/`)**
+   - `app.py` exposes `POST /agent`.
+   - `main.py` runs the AI agent and returns structured actions.
+   - `schemas.py` defines the allowed browser action payloads.
 
-### Data flow
-1. The user opens the overlay; `popup.js` collects the active window's tabs and tab groups and displays autocomplete suggestions from tabs, bookmarks, and curated Chrome pages.
-2. When the user submits a request, the extension posts `{prompt, context}` to `POST /agent`. The `context` contains sanitized tab metadata plus a persistent `client_id` stored in `chrome.storage`.
-3. `backend/app.py` checks Redis counters to rate-limit by client, IP, and globally, then forwards the request to the agent (`run_agent` in `backend/main.py`).
-4. The agent reasons over the provided context and returns a schema-validated object (defined in `backend/schemas.py`).
-5. The extension interprets `result.action`:
-   - `organize_tabs`: regroups open tabs, collapsing them with deterministic colors.
-   - `generate_tabs`: opens new tabs and stores them in a freshly named group.
-   - `search_tabs`: focuses a matching tab via the background service worker.
-   - `close_tabs`: closes tabs whose titles/urls match the payload.
+3. **Landing page (`landing-page/`)**
+   - Static product/waitlist page and privacy policy.
+   - `waitlist.js` handles email capture.
 
-## Local setup
+Data flow:
 
-### Requirements
-- Python 3.10+ (the repo includes a `venv/` folder, but create your own virtual environment).
-- Redis (cloud URL or local instance).
-- Google API key with access to Gemini 2.5 Flash (used through `pydantic-ai`'s `google-gla` provider).
-- Google Chrome (or Chromium) with Developer Mode enabled for loading unpacked extensions.
-
-### Configure environment variables
-
-Create a `.env` file at the repository root with the following keys. Never commit real secrets.
-
-```bash
-GEMINI_API_KEY=your_key             # Used by pydantic-ai's Gemini backend
-GOOGLE_API_KEY=your_key             # Alias used by some Google SDKs
-REDIS_API_LINK=hostname_or_ip       # Redis host (or localhost if you run your own)
-REDIS_API_PWD=strong_password       # Redis auth password
-MONGO_USERNAME=optional_if_used
-MONGO_PWD=optional_if_used
+```text
+Shortcut or toolbar click
+  -> content.js overlay
+  -> popup.js local search index
+  -> grouped results for Recent, Open Tabs, Bookmarks, Chrome, Web Search, and Ask AI
+  -> selected local result opens or switches locally with Chrome APIs
+  -> selected Ask AI result posts browser context to POST /agent
+  -> structured AI action executes locally in Chrome
 ```
 
-If you prefer a local Redis container instead of a cloud instance you can run:
+## Current Features
+- Shows the five most recently used tabs before the user types.
+- Searches open tabs across Chrome windows by title, URL, and domain.
+- Searches Chrome bookmarks from the same input.
+- Opens built-in Chrome destinations such as Settings, History, Downloads, Extensions, Passwords, Clear Browsing Data, Flags, and the Chrome Web Store.
+- Groups visible results under hierarchy sections so bookmarks, open tabs, Chrome pages, and web fallback results are visually separated.
+- Includes a compact search-type selector on the right side of the search bar, without a dedicated Chrome filter.
+- Provides a Google fallback result for typed queries.
+- Provides an explicit Ask AI category for AI browser actions.
 
-```bash
-docker run -p 6379:6379 -e REDIS_PASSWORD=tabi redis redis-server --requirepass tabi
-```
+## Notes
+- Search and ranking are deterministic and local unless the user selects an `Ask AI` result.
+- Persistent tab aliases and history search are proposal items for a later pass.
+- The extension still uses broad host access for overlay injection across pages; permission scoping should be revisited before Chrome Web Store submission.
 
-Then point `REDIS_API_LINK=127.0.0.1` and update the password/port in `backend/app.py`.
-
-### Install backend dependencies
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install fastapi uvicorn[standard] redis python-dotenv pydantic pydantic-ai
-```
-
-> Tip: create a `requirements.txt` once you've stabilized the dependency list.
-
-### Run the API locally
-
-```bash
-uvicorn app:app --reload --host 0.0.0.0 --port 8000
-```
-
-- `GET /` responds with `{"status": "Tabi's backend is live!"}`.
-- `POST /agent` accepts:
-
-```jsonc
-{
-  "prompt": "close the distracting tabs",
-  "context": {
-    "client_id": "uuid-from-chrome-storage",
-    "tabs": [
-      {
-        "group_name": "Work",
-        "tabs": [
-          {"title": "Sprint doc", "url": "...", "description": "..."}
-        ]
-      }
-    ]
-  }
-}
-```
-
-It returns `{ "action": "close_tabs", "output": {...} }`.
-
-### Load the Chrome extension
-1. Update `BACKEND_URL` in `extension/popup.js` if your API is not running on `http://127.0.0.1:8000`.
-2. Open Chrome → `chrome://extensions` → enable **Developer mode**.
-3. Click **Load unpacked**, select the `extension/` directory.
-4. Pin the extension or press `Cmd + K` / `Ctrl + Shift + K` (declared in `manifest.json`) to toggle the overlay.
-5. Watch the console (`chrome://extensions → Inspect views`) for logs if something misbehaves.
-
-### Landing page preview (optional)
-
-The `landing-page/` folder is a static site. Open `landing-page/index.html` directly in a browser or serve it via any static file server if you need live reload.
-
-## Development tips
-- The backend enforces global, per-client, and per-IP rate limits; when testing locally you can temporarily lower the `RATE_LIMIT`, `IP_RATE_LIMIT`, and `GLOBAL_RATE_LIMIT` constants in `backend/app.py`.
-- `popup.js` is the integration point for new agent actions—extend the `handleAgentResponse` switch and add new schema types in `backend/schemas.py` when expanding capabilities.
-- When adjusting styling, remember the UI runs inside a shadow DOM injected by `content.js`, so global page styles will not leak in.
-
-Happy tab taming!
+## Status
+In Progress

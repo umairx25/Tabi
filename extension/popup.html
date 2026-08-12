@@ -16,14 +16,13 @@
   <div class="search-bar" >
 
     <!-- Search svg -->
-    <div class = "search-holder" style="margin-right: 20px;">
+    <div class="search-holder">
       <svg
         class="searchIcon"
         width="20px"
         viewBox="0 0 24 24"
         height="20px"
         xmlns="http://www.w3.org/2000/svg"
-        style="margin-right: 10px !important; position: fixed; top: 10%; left: 2rem;"
       >
         <path fill="none" d="M0 0h24v24H0z"></path>
         <path
@@ -38,13 +37,14 @@
       <input
         class="input"
         id="search-input"
-        placeholder="Ask Tabi to..."
+        placeholder="Search tabs, bookmarks, or the web..."
         type="text"
       />
-      <div class="enter-hint">⏎ Ask Tabi</div>
+      <button id="filter-button" class="filter-button" type="button" aria-haspopup="menu" aria-label="Search All"></button>
 
     </div>
   </div>
+  <div id="filter-menu" class="filter-menu" role="menu" hidden></div>
 
   <!-- Display loading information -->
   <div id="results" style="display: none;"></div>
@@ -52,8 +52,5 @@
 
   <!-- Scripts -->
     <script type="module" src="popup.js"></script>
-    <script type="module" src="auto_complete.js"></script>
     </body>
 </html>
-
-
