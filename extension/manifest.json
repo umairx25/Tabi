@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Tabi",
   "version": "0.1",
-  "description": "A faster tab switcher and universal Chrome search bar.",
+  "description": "Tabi is a command bar for Chrome that allows you to rename tabs, search tabs and bookmarks, and use quick tools from one place.",
   "permissions": [
     "tabs",
     "tabGroups",
