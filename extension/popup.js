@@ -9,8 +9,7 @@ const results = document.getElementById("results");
 const searchBar = document.querySelector(".search-bar");
 const filterButton = document.getElementById("filter-button");
 const filterMenu = document.getElementById("filter-menu");
-// const BACKEND_URL = "https://tabi-api-10z9.onrender.com";
-const BACKEND_URL = "http://0.0.0.0:8001";
+const BACKEND_URL = "https://tabi-api-10z9.onrender.com";
 
 const MAX_VISIBLE_RESULTS = 5;
 const DEFAULT_FILTER = "all";
