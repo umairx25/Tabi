@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from main import run_agent
 from dotenv import load_dotenv
 import os
+import json
 import httpx
 from datetime import datetime
 
@@ -41,9 +42,11 @@ async def rate_limit(req: Request, call_next):
         return await call_next(req)
 
     try:
-        body = await req.json()
+        body = json.loads(await req.body())
         client_id = body.get("context", {}).get("client_id")
-        client_ip = str(req.client.host)
+        client_ip = req.headers.get("cf-connecting-ip") or (
+            str(req.client.host) if req.client else "unknown"
+        )
     except Exception:
         client_id = None
         client_ip = "unknown"
