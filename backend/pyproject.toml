@@ -6,7 +6,6 @@ dependencies = [
     "fastapi==0.125.0",
     "httpx==0.28.1",
     "pydantic==2.12.5",
-    "pydantic-ai-slim[google]==1.36.0",
     "python-dotenv==1.2.1",
     "python-multipart==0.0.20",
 ]
