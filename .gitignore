@@ -1,2 +1,7 @@
 .env
 venv
+.venv/
+.venv-workers/
+.dev.vars
+.wrangler/
+python_modules/

@@ -6,12 +6,14 @@ based on the call
 
 from __future__ import annotations
 from pydantic_ai import Agent
+from pydantic_ai.models.google import GoogleModel
+from pydantic_ai.providers.google import GoogleProvider
 from dotenv import load_dotenv
 from schemas import Result
 
 # ---------- ENV / CONFIG ----------
 load_dotenv()
-MODEL = "google-gla:gemini-2.5-flash"
+MODEL = "gemini-2.5-flash"
 
 
 # ---------- SYSTEM PROMPT ----------
@@ -27,15 +29,16 @@ Given tabs and user request, decide what to do AND return the result in one go.
 """
 
 
-agent = Agent[None, Result](
-    model=MODEL,
-    system_prompt=SYSTEM_PROMPT,
-    output_type= Result
-)
-
 # Single call
-async def run_agent(prompt: str, tabs: list[dict]):
+async def run_agent(prompt: str, tabs: list[dict], api_key: str | None = None):
     try:
+        provider = GoogleProvider(api_key=api_key)
+        model = GoogleModel(MODEL, provider=provider)
+        agent = Agent[None, Result](
+            model=model,
+            system_prompt=SYSTEM_PROMPT,
+            output_type=Result,
+        )
         result = await agent.run(f"Tabs: {tabs}\nUser: {prompt}")
         output = getattr(result, "output", None) or getattr(result, "data", None)
 
@@ -45,6 +48,6 @@ async def run_agent(prompt: str, tabs: list[dict]):
             return output.dict()
         return output
 
-    except Exception as e:
-        return e
+    except Exception:
+        raise
     
