@@ -5,9 +5,8 @@ based on the call
 """
 
 from __future__ import annotations
-from pydantic_ai import Agent
-from pydantic_ai.models.google import GoogleModel
-from pydantic_ai.providers.google import GoogleProvider
+import httpx
+from pydantic import TypeAdapter
 from dotenv import load_dotenv
 from schemas import Result
 
@@ -31,23 +30,32 @@ Given tabs and user request, decide what to do AND return the result in one go.
 
 # Single call
 async def run_agent(prompt: str, tabs: list[dict], api_key: str | None = None):
-    try:
-        provider = GoogleProvider(api_key=api_key)
-        model = GoogleModel(MODEL, provider=provider)
-        agent = Agent[None, Result](
-            model=model,
-            system_prompt=SYSTEM_PROMPT,
-            output_type=Result,
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
+
+    response_schema = TypeAdapter(Result).json_schema()
+    payload = {
+        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{
+            "role": "user",
+            "parts": [{"text": f"Tabs: {tabs}\nUser: {prompt}"}],
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseJsonSchema": response_schema,
+        },
+    }
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent",
+            headers={"x-goog-api-key": api_key},
+            json=payload,
         )
-        result = await agent.run(f"Tabs: {tabs}\nUser: {prompt}")
-        output = getattr(result, "output", None) or getattr(result, "data", None)
+        response.raise_for_status()
 
-        if hasattr(output, "model_dump"):
-            return output.model_dump()
-        if hasattr(output, "dict"):
-            return output.dict()
-        return output
-
-    except Exception:
-        raise
+    data = response.json()
+    text = data["candidates"][0]["content"]["parts"][0]["text"]
+    result = TypeAdapter(Result).validate_json(text)
+    return result.model_dump()
     
