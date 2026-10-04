@@ -11,6 +11,13 @@ dependencies = [
     "python-multipart==0.0.20",
 ]
 
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["app", "main", "schemas"]
+
 [dependency-groups]
 dev = [
     "workers-py",
