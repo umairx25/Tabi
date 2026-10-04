@@ -5,7 +5,14 @@
   "compatibility_date": "2026-10-03",
   "compatibility_flags": ["python_workers"],
   "python_modules": {
-    "exclude": ["**/*.pyc", "**/__pycache__", ".venv/**", ".venv-workers/**"]
+    "exclude": [
+      "**/*.pyc",
+      "**/__pycache__",
+      "**/tests/**",
+      "**/test/**",
+      "**/*.dist-info/**",
+      "pydantic/v1/**"
+    ]
   },
   "secrets": {
     "required": ["GEMINI_API_KEY", "REMOVE_BG_API_KEY"]
