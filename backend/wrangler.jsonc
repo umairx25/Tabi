@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tabi-api",
+  "main": "app.py",
+  "compatibility_date": "2026-10-03",
+  "compatibility_flags": ["python_workers"],
+  "python_modules": {
+    "exclude": ["**/*.pyc", "**/__pycache__", ".venv/**", ".venv-workers/**"]
+  },
+  "secrets": {
+    "required": ["GEMINI_API_KEY", "REMOVE_BG_API_KEY"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

@@ -6,15 +6,13 @@ from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
-from main import run_agent 
-import uvicorn
+from main import run_agent
 from dotenv import load_dotenv
 import os
 import httpx
 from datetime import datetime
 
-dotenv = load_dotenv()
-REMOVE_BG_API_KEY = os.getenv("REMOVE_BG_API_KEY")
+load_dotenv()
 RATE_LIMIT = 50
 IP_RATE_LIMIT = 25
 GLOBAL_RATE_LIMIT = 400
@@ -102,21 +100,26 @@ def root():
     return {"status": "Tabi's backend is live!"}
 
 @app.post("/agent")
-async def agent_route(req: PromptRequest):
+async def agent_route(req: PromptRequest, request: Request):
     try:
-        result = await run_agent(req.prompt, (req.context["tabs"]))
+        env = request.scope.get("env")
+        api_key = getattr(env, "GEMINI_API_KEY", None) if env else os.getenv("GEMINI_API_KEY")
+        result = await run_agent(req.prompt, req.context["tabs"], api_key)
         return JSONResponse(content={
             "output": result["output"],
             "action": result["action"]
         })
     except Exception as e:
         # print("Agent error:", e)
-        return JSONResponse(status_code=500, content={"Error encountered"})
+        return JSONResponse(status_code=500, content={"error": "Error encountered"})
 
 
 @app.post("/remove-background")
-async def remove_background(image: UploadFile = File(...)):
-    if not REMOVE_BG_API_KEY:
+async def remove_background(request: Request, image: UploadFile = File(...)):
+    env = request.scope.get("env")
+    remove_bg_api_key = getattr(env, "REMOVE_BG_API_KEY", None) if env else os.getenv("REMOVE_BG_API_KEY")
+
+    if not remove_bg_api_key:
         return JSONResponse(status_code=500, content={"error": "Remove.bg API key is not configured"})
 
     if not image.content_type or not image.content_type.startswith("image/"):
@@ -133,7 +136,7 @@ async def remove_background(image: UploadFile = File(...)):
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(
                 "https://api.remove.bg/v1.0/removebg",
-                headers={"X-Api-Key": REMOVE_BG_API_KEY},
+                headers={"X-Api-Key": remove_bg_api_key},
                 data={"size": "auto"},
                 files={
                     "image_file": (
@@ -161,4 +164,16 @@ async def remove_background(image: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
+    import uvicorn
+
     uvicorn.run("app:app", host="0.0.0.0", port=8001, reload=True)
+
+
+# Cloudflare Workers production entry point. Uvicorn remains available for
+# ordinary local development.
+try:
+    from workers import asgi
+
+    Default = asgi.entrypoint(app)
+except ImportError:
+    Default = None
